@@ -4,6 +4,7 @@ import {
   removeContact,
   addContact,
   updateContact as updateContactService,
+  updateStatusContact,
 } from "../services/contactsServices.js";
 
 import HttpError from "../helpers/HttpError.js";
@@ -63,6 +64,27 @@ export const updateContact = async (req, res, next) => {
     }
 
     const updated = await updateContactService(id, data);
+    if (!updated) {
+      throw HttpError(404, "Not found");
+    }
+
+    res.status(200).json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { favorite } = req.body;
+
+    if (typeof favorite !== "boolean") {
+      throw HttpError(400, "Missing or invalid field 'favorite'");
+    }
+
+    const updated = await updateStatusContact(id, { favorite });
+
     if (!updated) {
       throw HttpError(404, "Not found");
     }
