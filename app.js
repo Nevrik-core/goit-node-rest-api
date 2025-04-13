@@ -3,8 +3,12 @@ import morgan from "morgan";
 import cors from "cors";
 
 import { sequelize } from "./db/db.js";
-import { Contact } from "./schemas/contact.js";
+import { Contact } from "./models/contact.js";
+import { User } from "./models/user.js";
+
 import contactsRouter from "./routes/contactsRouter.js";
+import authRouter from "./routes/authRouter.js";
+import authMiddleware from "./middlewares/authMiddleware.js";
 
 const app = express();
 
@@ -12,24 +16,29 @@ app.use(morgan("tiny"));
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/contacts", contactsRouter);
+
+app.use("/api/contacts", authMiddleware, contactsRouter);
+app.use("/api/auth", authRouter);
+
 
 app.use((_, res) => {
   res.status(404).json({ message: "Route not found" });
 });
+
 
 app.use((err, req, res, next) => {
   const { status = 500, message = "Server error" } = err;
   res.status(status).json({ message });
 });
 
+
 try {
   await sequelize.authenticate();
-  console.log("✅ Database connection successful");
+  console.log("Database connection successful");
 
-  await sequelize.sync(); // створює таблиці, якщо їх немає
+  await sequelize.sync();
 } catch (error) {
-  console.error("❌ DB connection error:", error.message);
+  console.error("DB connection error:", error.message);
   process.exit(1);
 }
 
