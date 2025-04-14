@@ -13,20 +13,20 @@ export async function addContact(data, ownerId) {
 }
 
 export async function removeContact(id, ownerId) {
-  const contact = await Contact.findOne({ where: { id, owner: ownerId } });
+  const contact = await getContactById(id, ownerId);
   if (!contact) return null;
   await contact.destroy();
   return contact;
 }
 
 export async function updateContact(id, data, ownerId) {
-  const contact = await Contact.findOne({ where: { id, owner: ownerId } });
+  const contact = await getContactById(id, ownerId);
   if (!contact) return null;
   return await contact.update(data);
 }
 
 export async function updateStatusContact(id, { favorite }, ownerId) {
-  const contact = await Contact.findOne({ where: { id, owner: ownerId } });
+  const contact = await getContactById(id, ownerId);
   if (!contact) return null;
   contact.favorite = favorite;
   await contact.save();

@@ -21,9 +21,9 @@ export const getAllContacts = async (req, res, next) => {
 export const getOneContact = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const contact = await getContactById(id);
+    const contact = await getContactById(id, req.user.id);
 
-    if (!contact || contact.owner !== req.user.id) {
+    if (!contact) {
       throw HttpError(404, "Not found");
     }
 
@@ -36,14 +36,13 @@ export const getOneContact = async (req, res, next) => {
 export const deleteContact = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const contact = await getContactById(id);
+    const result = await removeContact(id, req.user.id);
 
-    if (!contact || contact.owner !== req.user.id) {
+    if (!result) {
       throw HttpError(404, "Not found");
     }
 
-    await contact.destroy();
-    res.status(200).json(contact);
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
@@ -59,7 +58,6 @@ export const createContact = async (req, res, next) => {
   }
 };
 
-
 export const updateContact = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -69,13 +67,11 @@ export const updateContact = async (req, res, next) => {
       throw HttpError(400, "Body must have at least one field");
     }
 
-    const contact = await getContactById(id);
-
-    if (!contact || contact.owner !== req.user.id) {
+    const updated = await updateContactService(id, data, req.user.id);
+    if (!updated) {
       throw HttpError(404, "Not found");
     }
 
-    const updated = await contact.update(data);
     res.status(200).json(updated);
   } catch (err) {
     next(err);
@@ -91,16 +87,13 @@ export const updateStatus = async (req, res, next) => {
       throw HttpError(400, "Missing or invalid field 'favorite'");
     }
 
-    const contact = await getContactById(id);
+    const updated = await updateStatusContact(id, { favorite }, req.user.id);
 
-    if (!contact || contact.owner !== req.user.id) {
+    if (!updated) {
       throw HttpError(404, "Not found");
     }
 
-    contact.favorite = favorite;
-    await contact.save();
-
-    res.status(200).json(contact);
+    res.status(200).json(updated);
   } catch (err) {
     next(err);
   }

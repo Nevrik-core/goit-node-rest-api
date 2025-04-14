@@ -78,3 +78,12 @@ export const logout = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getCurrent = async (req, res, next) => {
+  try {
+    const { email, subscription } = req.user;
+    res.status(200).json({ email, subscription });
+  } catch (err) {
+    next(err);
+  }
+};
