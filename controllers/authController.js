@@ -2,6 +2,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.js";
 import HttpError from "../helpers/HttpError.js";
+import gravatar from "gravatar";
+import fs from "fs/promises";
+import path from "path";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -16,21 +19,31 @@ export const register = async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    let avatarURL;
+    try {
+      avatarURL = gravatar.url(email, { s: '250', d: 'retro' }, true);
+    } catch {
+      avatarURL = null;
+    }
+
     const newUser = await User.create({
       email,
       password: hashedPassword,
+      avatarURL,
     });
 
     res.status(201).json({
       user: {
         email: newUser.email,
         subscription: newUser.subscription,
+        avatarURL: newUser.avatarURL,
       },
     });
   } catch (err) {
     next(err);
   }
 };
+
 
 export const login = async (req, res, next) => {
   try {
@@ -56,6 +69,7 @@ export const login = async (req, res, next) => {
       user: {
         email: user.email,
         subscription: user.subscription,
+        avatarURL: user.avatarURL
       },
     });
   } catch (err) {
@@ -81,8 +95,26 @@ export const logout = async (req, res, next) => {
 
 export const getCurrent = async (req, res, next) => {
   try {
-    const { email, subscription } = req.user;
-    res.status(200).json({ email, subscription });
+    const { email, subscription, avatarURL } = req.user;
+    res.status(200).json({ email, subscription, avatarURL });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+export const updateAvatar = async (req, res, next) => {
+  try {
+    const { path: tempPath, filename } = req.file;
+    const avatarsDir = path.resolve("public", "avatars");
+    const finalPath = path.join(avatarsDir, filename);
+
+    await fs.rename(tempPath, finalPath);
+    const avatarURL = `/avatars/${filename}`;
+
+    await req.user.update({ avatarURL });
+
+    res.json({ avatarURL });
   } catch (err) {
     next(err);
   }
