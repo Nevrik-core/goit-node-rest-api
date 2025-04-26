@@ -29,6 +29,10 @@ app.use((_, res) => {
 
 
 app.use((err, req, res, next) => {
+
+  if (err.isJoi) {
+    return res.status(400).json({ message: "Помилка від Joi або іншої бібліотеки валідації" });
+  }
   const { status = 500, message = "Server error" } = err;
   res.status(status).json({ message });
 });
